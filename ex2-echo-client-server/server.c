@@ -1,98 +1,61 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <pthread.h>
-#include <netinet/in.h>
-#include <unistd.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #define PORT 8080
-#define BUFF_SZ 1024
-
-typedef struct {
-    int client_socket;
-    pthread_t thread_id;
-} client_info_t;
-
-void* handle_client(void *arg){
-    client_info_t *info = (client_info_t *)arg;
-    int client_socket = info->client_socket;
-    char buff[BUFF_SZ];
-    memset(buff, 0, BUFF_SZ);
-    
-    while(1) {
-        int bytes_read = read(client_socket, buff, BUFF_SZ-1);
-        if(bytes_read <= 0) {
-            break;
-        }
-        buff[bytes_read]='\0';
-        if(strcmp(buff, "bye") == 0) {
-            break;
-        }
-        printf("Client [Thread %lu]: %s\n", info->thread_id, buff);
-
-        printf("Your Message: ");
-        memset(buff, 0, BUFF_SZ);
-        fgets(buff, BUFF_SZ, stdin);
-        buff[strcspn(buff, "\n")] = '\0';
-        write(client_socket, buff, strlen(buff));
-    }
-
-    close(client_socket);
-    free(info);
-    return NULL;
-}
+#define BUFFER_SIZE 1024
 
 int main() {
-    int server_socket, client_socket;
-    struct sockaddr_in server_addr, client_addr;
-    int client_sockaddr_len = sizeof(client_addr);
+    int server_fd, new_socket;
+    struct sockaddr_in address;
+    int addrlen = sizeof(address);
+    char buffer[BUFFER_SIZE] = {0};
 
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if(server_socket < 0) {
-        printf("SERVER SOCKET NOT CONNECTED\n");
-        return 0;
+    // Create socket file descriptor
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("Socket failed");
+        return 1;
     }
 
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    // Define address
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
 
-    if(bind(server_socket, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
-        printf("BIND ERROR\n");
-        return 0;
+    // Bind the socket to the port
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        perror("Bind failed");
+        return 1;
     }
 
-    if(listen(server_socket, 5) < 0) {
-        printf("LISTEN ERROR\n");
-        return 0;
+    // Start listening for connections
+    if (listen(server_fd, 3) < 0) {
+        perror("Listen failed");
+        return 1;
+    }
+    
+    printf("Server listening on port %d...\n", PORT);
+
+    // Accept a connection
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
+        perror("Accept failed");
+        return 1;
     }
 
-    printf("SERVER LISTENING TO PORT %d\n", PORT);
+    // Echo back the message
+    while (1) {
+        memset(buffer, 0, BUFFER_SIZE);
+        int valread = read(new_socket, buffer, BUFFER_SIZE);
+        if (valread <= 0) break;  // Exit if the connection is closed
 
-    while(1) {
-        client_socket = accept(server_socket, (struct sockaddr*) &client_addr, &client_sockaddr_len);
-        if(client_socket < 0) {
-            printf("ACCEPT FAILED\n");
-            continue;
-        } 
-
-        client_info_t *info = malloc(sizeof(client_info_t));
-        if(info == NULL) {
-            printf("MEMORY ALLOC FAILED\n");
-            close(client_socket);
-            continue;
-        }
-
-        info->client_socket = client_socket;
-        if(pthread_create(&info->thread_id, NULL, handle_client, (void *)info) != 0) {
-            printf("FAILED TO CREATE THREAD\n");
-            free(info);
-            close(client_socket);
-            continue;
-        }
-        pthread_detach(info->thread_id);
+        printf("Message from Client: %s\n", buffer);
+        send(new_socket, buffer, strlen(buffer), 0);
+        printf("Message sent: %s\n", buffer);
     }
-    close(server_socket);
+
+    close(new_socket);
+    close(server_fd);
+    return 0;
 }
