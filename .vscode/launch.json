@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/clg/sem5/Networks/Lab/ex2",
-      "program": "d:/clg/sem5/Networks/Lab/ex2/build/Debug/outDebug",
+      "cwd": "d:/clg/sem5/Networks/Lab/ex3-file-transfer",
+      "program": "d:/clg/sem5/Networks/Lab/ex3-file-transfer/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
