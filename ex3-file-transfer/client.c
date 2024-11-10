@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     saddr.sin_port = htons(7228);
 
     if (connect(fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) {
-        printf("CONNECT FAILURE\n");
+        printf("CONNECT F   AILURE\n");
         close(fd);
         return 1;
     }

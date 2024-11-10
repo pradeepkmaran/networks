@@ -1,0 +1,10 @@
+
+proc plotting {tcpsource file1} {
+global ns
+set conges [$tcpsource set cwnd_]
+set now[$ns now]
+puts $file1 “$now $conges”
+$ns at [expr $now+0.1]  “plotting $tcpsource $file1”
+}
+set print [open tcpconges.xg w]
+$ns at 0.0  “plotting $tcp1 $print”

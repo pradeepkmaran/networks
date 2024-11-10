@@ -15,7 +15,7 @@ int main() {
 
     // Create socket file descriptor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("Socket failed");
+        printf("Socket failed");
         return 1;
     }
 
@@ -26,13 +26,13 @@ int main() {
 
     // Bind the socket to the port
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("Bind failed");
+        printf("Bind failed");
         return 1;
     }
 
     // Start listening for connections
     if (listen(server_fd, 3) < 0) {
-        perror("Listen failed");
+        printf("Listen failed");
         return 1;
     }
     
@@ -40,7 +40,7 @@ int main() {
 
     // Accept a connection
     if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-        perror("Accept failed");
+        printf("Accept failed");
         return 1;
     }
 
