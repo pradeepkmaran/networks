@@ -12,7 +12,6 @@ void checkAndCorrectHammingCode(char *receivedCode) {
         hammingBits[i] = receivedCode[i] - '0';
     }
 
-    // Calculate the parity bits
     int p1 = hammingBits[0] ^ hammingBits[2] ^ hammingBits[4] ^ hammingBits[6];
     int p2 = hammingBits[1] ^ hammingBits[2] ^ hammingBits[5] ^ hammingBits[6];
     int p4 = hammingBits[3] ^ hammingBits[4] ^ hammingBits[5] ^ hammingBits[6];
@@ -23,7 +22,7 @@ void checkAndCorrectHammingCode(char *receivedCode) {
         printf("No error detected in received data.\n");
     } else {
         printf("Error detected at position: %d\n", errorPosition);
-        hammingBits[errorPosition - 1] ^= 1;  // Correct the error
+        hammingBits[errorPosition - 1] ^= 1; 
         printf("Corrected code: ");
         for (int i = 0; i < 7; i++) {
             printf("%d", hammingBits[i]);
@@ -38,39 +37,20 @@ int main() {
     int addrlen = sizeof(address);
     char buffer[8] = {0};
 
-    // Create socket
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("Socket failed");
-        exit(EXIT_FAILURE);
-    }
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(PORT);
 
-    // Bind socket to port
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("Bind failed");
-        exit(EXIT_FAILURE);
-    }
+    bind(server_fd, (struct sockaddr *)&address, sizeof(address));
+    listen(server_fd, 3);
 
-    // Listen for incoming connections
-    if (listen(server_fd, 3) < 0) {
-        perror("Listen");
-        exit(EXIT_FAILURE);
-    }
+    new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
 
-    // Accept a connection
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-        perror("Accept");
-        exit(EXIT_FAILURE);
-    }
-
-    // Receive the hamming code
     read(new_socket, buffer, 7);
     printf("Received code: %s\n", buffer);
 
-    // Check and correct errors
     checkAndCorrectHammingCode(buffer);
 
     close(new_socket);
